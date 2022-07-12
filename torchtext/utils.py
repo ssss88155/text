@@ -125,7 +125,39 @@ def download_from_url(url, path=None, root=".data", overwrite=False, hash_value=
     # all good
     return path
 
+def unicode_csv_reader(unicode_csv_data, **kwargs):
+    r"""Since the standard csv library does not handle unicode in Python 2, we need a wrapper.
+    Borrowed and slightly modified from the Python docs:
+    https://docs.python.org/2/library/csv.html#csv-examples
+    Args:
+        unicode_csv_data: unicode csv data (see example below)
+    Examples:
+        >>> from torchtext.utils import unicode_csv_reader
+        >>> import io
+        >>> with io.open(data_path, encoding="utf8") as f:
+        >>>     reader = unicode_csv_reader(f)
+    """
 
+    # Fix field larger than field limit error
+    maxInt = sys.maxsize
+    while True:
+        # decrease the maxInt value by factor 10
+        # as long as the OverflowError occurs.
+        try:
+            csv.field_size_limit(maxInt)
+            break
+        except OverflowError:
+            maxInt = int(maxInt / 10)
+    csv.field_size_limit(maxInt)
+
+    for line in csv.reader(unicode_csv_data, **kwargs):
+        yield line
+
+
+def utf_8_encoder(unicode_csv_data):
+    for line in unicode_csv_data:
+        yield line.encode('utf-8')
+        
 def extract_archive(from_path, to_path=None, overwrite=False):
     """Extract archive.
     Args:
